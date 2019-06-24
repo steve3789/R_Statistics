@@ -1,0 +1,98 @@
+---
+title: "김상규"
+author: "김상규"
+date: '2019 6 20 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(prob)
+library(dplyr)
+options(digits = 3)
+```
+
+
+# 이항분포, 정규분포 연습문제
+## 1번문제  
+  
+1) 영화관에서 줄을 기다리는 시간을 측정한다.(X)- 두가지 결과로 나오지 않는다.  
+2) 전화가 왔을 때, 전화를 한 사람이 여자인지를 측정한다. (O) - 여자인지 아닌지 2개로 나온다.
+3) 주사위를 한 번 던졌을 때, 나오는 숫자를 체크한다. (X) - 두가지 결과로 나오지 않는다.  
+4) 주사위를 한 번 던졌을 때, 숫자 2가 나오는지를 체크한다. (O) - 2인지 아닌지 2개로 나온다.
+  
+## 2번문제
+
+```{r}
+# 2. 10번 시도해서 7번 성공할 확률
+n <- 10
+p <- 4/5
+print(dbinom(7, n, p))
+```
+
+## 3번문제
+
+```{r}
+n <- 20
+p <- 5/100
+print(pbinom(2, n, p))
+```
+
+## 4번문제
+
+```{r}
+n <- 20
+p <- 20/100
+print(pbinom(20, n, p) - pbinom(1, n, p))
+```
+
+## 5번문제
+
+```{r}
+a <- data.frame(rolldie(2))
+b <- a %>% filter(a$X1 + a$X2 == 6)
+print(length(rownames(b))/length(rownames(a)))
+```
+
+## 6번문제
+
+```{r}
+mu <- 800
+sigma <- 40
+print(pnorm(750, mean = mu, sd = sigma))
+```
+
+## 7-1번문제
+
+```{r}
+mu <- 11
+sigma <- sqrt(16)
+print(1 - pnorm(20, mean = mu, sd = sigma))
+```
+
+## 7-2번문제
+
+```{r}
+# 7 - 2. 상위 10%
+print(qnorm(0.9, mean = mu, sd = sigma))
+```
+
+## 8번문제
+
+```{r}
+# 8. 80점 이상 90점 이하
+mu <- 70
+sigma <- 8
+print(pnorm(90, mean = mu, sd = sigma) - pnorm(79, mean = mu, sd = sigma))
+```
+
+## 9번문제
+
+```{r}
+# 9. H(0) + H(2)
+mu <- 1.5
+sigma <- 2
+print(pnorm(3, mean = mu, sd = sigma) - pnorm(2, mean = mu, sd = sigma) + (pnorm(0, mean = mu, sd = 2) - pnorm(-1, mean = mu, sd = 2)))
+```
