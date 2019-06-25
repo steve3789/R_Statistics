@@ -107,3 +107,20 @@ p0.025 <- qnorm(0.05, mean = mu, sd = sig)
 
 pnorm(1.645) - pnorm(-1.645)
 pnorm(1.96) - pnorm(-1.96)
+
+z <- seq(-3, 3, by=0.001)
+z.p <- dnorm(z)
+
+zzp <- data.frame(z, z.p)
+shade <- rbind(c(-1.645, 0), subset(zzp, z > -1.645 & z < 1.645), c(1.645, 0))
+
+
+ggplot(zzp, aes(x = z, y = z.p)) + geom_point() + 
+  geom_polygon(data = shade, size = 2, fill = 'red', alpha = 0.5) +
+  ggtitle('표준 정규 분포 ( 90% )')
+
+
+shade <- rbind(c(-1.96, 0), subset(zzp, z > -1.96 & z < 1.96), c(1.96, 0))
+ggplot(zzp, aes(x = z, y = z.p)) + geom_point() + 
+  geom_polygon(data = shade, size = 2, fill = 'red', alpha = 0.5) +
+  ggtitle('표준 정규 분포 ( 95% )')
