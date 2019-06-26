@@ -1,0 +1,106 @@
+---
+title: "김상규"
+author: "김상규"
+date: '2019 6 26 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 데이터를 위한 라이브러리 설치
+```{r}
+library(dplyr)
+library(ggplot2)
+library(MASS)
+```
+  
+## 1번문제
+### 통계적으로 유의한가
+```{r}
+mtcarsA1 <- mtcars %>% filter(am == 1) %>% dplyr::select(mpg)
+mtcarsA0 <- mtcars %>% filter(am == 0) %>% dplyr::select(mpg)
+
+var.test(mtcarsA0$mpg, mtcarsA1$mpg)
+# p-value(0.06) >=0.05 이므로 등분산성을 만족한다. 통계적으로 유의하다.
+
+t.test(x = mtcarsA1$mpg, y = mtcarsA0$mpg, mu = 0, var.equal = T)
+# p-value(0.0002) <= 0.05 이므로 대립가설을 채택한다. 대립가설 채택으로 기어의 종류에 따라 mpg 차이가 난다.
+```
+  
+## 2번문제
+### 생산국에 따른 가격의 차이가 있는가
+```{r}
+USA93 <- Cars93 %>% filter(Origin == 'USA') %>% dplyr::select(Price)
+non_USA93 <- Cars93 %>% filter(Origin == 'non-USA') %>% dplyr::select(Price)
+
+var.test(non_USA93$Price, USA93$Price)
+# p-value(0.01) <= 0.05 이므로 등분산성을 만족하지 않는다. var.equal = F 이다.
+t.test(non_USA93$Price, USA93$Price, mu = 0)
+# p-value(0.32) >= 0.05 이므로 귀무가설을 채택한다. 생산국에 따른 차의 가격 차이는 없다.
+```
+  
+## 3번문제
+### mpg 데이터에 따른 검정
+#### 1) class에 따른 고속도로 연비
+```{r}
+mpgSub <- mpg %>% filter(class == 'subcompact') %>% dplyr::select(hwy)
+mpgMid <- mpg %>% filter(class == 'midsize') %>% dplyr::select(hwy)
+
+var.test(mpgMid$hwy, mpgSub$hwy)
+# p-value(8.825 * 10^-8) <= 0.05 이므로 등분산성을 만족하지 않는다. var.equal = F 이다.
+
+t.test(mpgMid$hwy, mpgSub$hwy, mu = 0)
+# p-value(0.38) >= 0.05 이므로 귀무가설을 채택한다. class에 따른 연비 차이는 없다.
+```
+  
+#### 2) 휘발유 종류에 따른 도시 연비
+```{r}
+mpgR <- mpg %>% filter(fl == 'r') %>% dplyr::select(cty)
+mpgP <- mpg %>% filter(fl == 'p') %>% dplyr::select(cty)
+
+var.test(mpgR$cty, mpgP$cty)
+# p-value(0.04) <= 0.05 이므로 등분산성을 만족하지 않는다. var.equal = F 이다.
+
+t.test(mpgR$cty, mpgP$cty, mu = 0)
+# p-value(0.22) >= 0.05 이므로 귀무가설을 채택한다. 휘발유에 따른 연비 차이는 없다.
+```
+  
+#### 3) 전륜과 후륜에 따른 도시 연비
+```{r}
+mpgF <- mpg %>% filter(class == 'subcompact' & drv == 'f') %>% dplyr::select(cty)
+mpgRr <- mpg %>% filter(class == 'subcompact' & drv == 'r') %>% dplyr::select(cty)
+
+var.test(mpgF$cty, mpgRr$cty)
+# p-value(0.002) <= 0.05 이므로 등분산성을 만족하지 않는다. var.equal = F 이다.
+
+t.test(mpgF$cty, mpgRr$cty, mu = 0)
+# p-value(1.759 * 10^-6) <= 0.05 이므로 대립가설을 채택한다. 전륜과 후륜에 따른 도시 연비 차이는 난다.
+```
+  
+## 4번문제
+### 당뇨병 치료제는 효과가 있는가?
+```{r}
+#4
+sample1 <- c(51.4, 52.0, 45.5, 54.5, 52.3, 50.9, 52.7, 50.3, 53.8, 53.1)
+sample2 <- c(50.1, 51.5, 45.9, 53.1, 51.8, 50.3, 52.0, 49.9, 52.5, 53.0)
+
+var.test(sample1, sample2)
+# p-value(0.6) >= 0.05 이므로 등분산성을 만족하지 않는다. var.equal = F 이다.
+
+t.test(sample1, sample2, paired = T)
+# p-value(0.006) <= 0.05 이므로 대립가설을 채택한다. 당뇨병 치료제는 효과가 있다.
+```
+  
+## 5번문제 
+### 재질에 따른 차이가 있는가?
+```{r}
+#5
+sample3 <- c(13.2, 8.2, 10.9, 14.3, 10.7, 6.6, 9.5, 10.8, 8.8, 13.3)
+sample4 <- c(14.0, 8.8, 11.2, 14.2, 11.8, 6.4, 9.8, 11.3, 9.3, 13.6)
+
+t.test(sample3, sample4, paired = T)
+# p-value(0.008) <= 0.05 이므로 대립가설을 채택한다. 재질의 차이가 있다.
+```
+
