@@ -1,0 +1,113 @@
+---
+title: "김상규"
+author: "김상규"
+date: '2019 6 28 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 회귀 분석 연습 문제
+## 필요한 라이브러리 설치
+```{r}
+library(dplyr)
+library(car)
+library(leaps)
+library(MASS)
+```
+  
+## 1번 문제
+### 아버지의 키가 165cm일 때 아들의 키는 얼마인가?
+```{r}
+a <- data.frame(아버지.Height = c(150, 160, 170, 180, 190),
+                아들.Height = c(176, 179, 182, 181, 185)
+                )
+head(a)
+a_lm <- lm( formula = a$아들.Height ~ a$아버지.Height)
+
+summary(a_lm)
+# Estimate (intercept = 146.6, 아버지의 키  = 0.2)
+# y = 0.2x + 146.6
+predicValue <- function(x) return(0.2 * x + 146.6)
+
+predicValue(165)
+```
+
+## 2번 문제
+### 월 소득 250만원일 때 신용카드 사용량은 얼마인가?
+```{r}
+b <- data.frame(월소득 = c(100, 200, 300, 400, 500),
+                카드사용량 = c(30, 70, 85, 140, 197)
+                )
+head(b)
+b_lm <- lm( formula = b$카드사용량 ~ b$월소득)
+
+summary(b_lm)
+# Estimate (intercept = -16.8, 월소득 = 0.404)
+# y = 0.404x -16.8
+predicValue2 <- function(x) return(0.404 * x -16.8)
+
+predicValue2(250)
+```
+  
+## 3번 문제
+### 배기량에 따른 마력의 회귀식은 무엇인가?
+```{r}
+c <- mtcars %>% dplyr::select(disp, hp)
+head(c)
+c_lm = lm(formula = c$hp ~ c$disp)
+
+summary(c_lm)
+# Estimate (intercept = 45.7345, disp = 0.4375)
+# y = 0.4375x + 45.7345
+```
+
+## 4번 문제
+### Boston 인근의 집값을 결정하는 다중회귀 모델을 제시하라
+```{r}
+
+d <- Boston
+head(d)
+
+# 선형모델 제작
+null=lm(medv~1, data=d)
+full=lm(medv~., data=d)
+
+# 각 독립계수의 분산팽창계수값을 통한 다중공산성 존재 여부 판단
+vif(full) > 4
+# nox, rad, tax의 값이 다중공산성이 있기에 데이터 정재를 할 필요가 있다.
+# 이번 분석은 그냥 포함한 상태로 분석을 한다.
+```
+```{r results="hide"}
+# step() 분석을 통한 AIC 비교
+d_lm_forw <- step(null, scope=list(lower=null, upper=full), direction="forward")
+d_lm_back <- step(full, data=d, direction="backward")
+d_lm_both <- step(null, scope = list(upper=full), data=d, direction="both")
+```
+```{r}
+# step() 분석을 통한 회귀모델은 다음과 같다.
+d_lm_forw
+d_lm_back
+d_lm_both
+
+# AIC를 비교한다.
+AIC(d_lm_back, d_lm_both, d_lm_forw)
+# forward, both로 분석한 회귀모델은 같고 세 모델 모두 같은 AIC 값을 지닌다.
+
+# step방법보다 모든 경우의 수를 보고 판단하기 위해 leaps의 regsubsets로 BIC 분석하고 회귀모델을 선택한다.
+d_regsubsets <- regsubsets(medv ~  ., data = d, method ='exhaustive', nbest = 13)
+# 분석 결과를 저장
+d_summary <- summary(d_regsubsets)
+# 각 경우의 수에 대한 bic 값을 추출한다.
+d_bicInfo <- summary(d_regsubsets)$bic
+# bic 값이 가장 작은 것을 찾는다.
+Min.val <- which.min(d_bicInfo)
+
+d_bic <- coef(d_regsubsets, Min.val)
+d_bicInfo[Min.val]
+# BIC 값이 가장 작은 조합은 92번째이며 그 회귀모델은 다음과 같으며 이 회귀모델을 채택한다.
+d_bic
+```
+

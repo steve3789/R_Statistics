@@ -1,10 +1,35 @@
-a1 <- data.frame(호수 = 1, ppm = c(5, 7, 6, 8, 6, 
+library(lawstat)
+
+a1 <- data.frame(group = 1, ppm = c(5, 7, 6, 8, 6, 
                                    7, 8, 8, 6, 10))
-a2 <- data.frame(호수 = 2, ppm = c(6, 8, 9, 11 ,13, 
+a2 <- data.frame(group = 2, ppm = c(6, 8, 9, 11 ,13, 
                                    12 ,10, 8, 9, 10))
-a3 <- data.frame(호수 = 3, ppm = c(14, 25, 26, 18, 19, 
+a3 <- data.frame(group = 3, ppm = c(14, 25, 26, 18, 19, 
                                    22, 21, 16, 20, 30))
 a <- rbind(a1,a2,a3)
+
+shapiro.test(a1$ppm)
+shapiro.test(a2$ppm)
+shapiro.test(a3$ppm)
+
+
+# 모두 p-value >= 0.05 이므로 귀무가설을 채택한다. 3개 호수의 산소량은 정규성을 가진다.
+
+
+# 각 호수 별 산소량에 대한 분산이 모두 동일한 지 검정한다. 
+# 이에 대해서는 Levene의 검,정과 Bartlett의 검정이 있다. 
+# 모두 세집단 이상의 경우에 대해 등분산성을 검정 시 사용하는 검정법이고 해당 통계량이 특정한 분포에 근사한다는 성질을 이용한다. 
+levene.test(a$ppm, a$group)
+bartlett.test(a$ppm, a$group) 
+anova(lm(y = a$ppm, x = a$group, data = a))
+
+# 모두 p-value <= 0.05 이므로 대립가설을 채택한다. 3개 호수의 산소량 등분산성을 가지지 않는다.
+
+# 각 호수에서 어느 곳에서 차이가 발생하는지 확인한다.
+a4 <- lm(ppm ~ group, data = a)
+a5 <- aov(a4)
+TukeyHSD(a5)
+
 head(a)
 ow <- lm(ppm ~ 호수, data = a)
 anova(ow)

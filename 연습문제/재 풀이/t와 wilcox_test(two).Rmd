@@ -1,0 +1,164 @@
+---
+title: "t와 wilcox_test"
+author: "김상규"
+date: '2019 6 28 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## 필요 라이브러리 설치
+```{r results='hide'}
+library(dplyr)
+library(ggplot2)
+library(MASS)
+```
+
+## 1번 문제
+#### mtcars 데이터셋에서 자동차 기어 종류(am: 오토/수동)에 따른 mpg의 차이가 통계적으로 유의한지 t-test를 통해 확인해 보시오.
+```{r}
+#1
+mtcarsA1 <- mtcars %>% dplyr::filter(am == 1) %>% dplyr::select(mpg)
+mtcarsA0 <- mtcars %>% dplyr::filter(am == 0) %>% dplyr::select(mpg)
+
+# 정규성 검사
+shapiro.test(mtcarsA0$mpg)
+shapiro.test(mtcarsA1$mpg)
+# 두 검사 모두 p-value >= 0.05 이므로 모두 정규성을 만족한다.
+# 정규성이 아닐 시 Wilcoxon rank sum - test를 실시한다.
+
+# 등분산성 테스트
+var.test(mtcarsA0$mpg, mtcarsA1$mpg)
+# p-value(0.06) >=0.05 이므로 등분산성을 만족한다. 통계적으로 유의하다.
+
+t.test(x = mtcarsA1$mpg, y = mtcarsA0$mpg, mu = 0)
+# p-value(0.001) <= 0.05 이므로 대립가설을 채택한다. 대립가설 채택으로 기어의 종류에 따라 mpg 차이가 난다.
+```
+  
+## 2번 문제
+#### MASS 패키지에 내장된 Cars93 데이터프레임에 대해서 생산국(Origin)이 USA vs. non-USA 2개의 group에 대해서 
+#### 차 가격(Price)의 평균이 차이가 있는지를 검정해보시오.
+```{r}
+#2
+USA93 <- Cars93 %>% dplyr::filter(Origin == 'USA') %>% dplyr::select(Price)
+non_USA93 <- Cars93 %>% dplyr::filter(Origin == 'non-USA') %>% dplyr::select(Price)
+
+#정규성 검사
+shapiro.test(USA93$Price)
+shapiro.test(non_USA93$Price)
+# 두 검사 모두 p-value <= 0.05 이므로 모두 정규성을 만족하지 않는다.
+
+# 정규성이 아닐 시 Wilcoxon rank sum - test를 실시한다.
+wilcox.test(y = USA93$Price, x = non_USA93$Price)
+# p-value(0.7) >= 0.05 이므로 귀무가설을 채택한다. 생산국에 따른 차의 가격 차이는 없다.
+
+# 등분산성 테스트
+var.test(y = non_USA93$Price, x = USA93$Price)
+# p-value(0.01) <=0.05 이므로 등분산성을 만족하지 않는다.
+
+# 정규성을 가진다고 가정하고 two sample - test를 진행한다.
+t.test(non_USA93$Price, USA93$Price, var.equal = F)
+# p-value(0.3) >= 0.05 이므로 귀무가설을 채택한다. 생산국에 따른 차의 가격 차이는 없다.
+```
+   
+## 3번 문제
+#### mpg 데이터셋에서 다음을 검정해 보시오.
+##### 1) subcompact 자동차와 midsize 자동차의 고속도로 연비
+```{r}
+#3
+mpgSub <- mpg %>% dplyr::filter(class == 'subcompact') %>% dplyr::select(hwy)
+mpgMid <- mpg %>% dplyr::filter(class == 'midsize') %>% dplyr::select(hwy)
+
+#정규성 검사
+shapiro.test(mpgSub$hwy)
+shapiro.test(mpgMid$hwy)
+# 두 검사 모두 p-value <= 0.05 이므로 모두 정규성을 만족하지 않는다.
+# 하지만 정규성을 가진다고 가정하고 테스트한다.
+
+# 등분산성 테스트
+var.test(y = mpgMid$hwy, x = mpgSub$hwy)
+# p-value(***) <=0.05 이므로 등분산성을 만족하지 않는다.
+
+# 정규성을 가진다고 가정하고 two sample - test를 진행한다.
+t.test(y = mpgMid$hwy, x = mpgSub$hwy, mu = 0, var.equal = F)
+# p-value(0.4) >= 0.05 이므로 귀무가설을 채택한다. class에 따른 연비 차이는 없다.
+```
+  
+##### 2) 일반 휘발유(r)와 고급 휘발유(p)의 도시 연비
+```{r}
+mpgR <- mpg %>% dplyr::filter(fl == 'r') %>% dplyr::select(cty)
+mpgP <- mpg %>% dplyr::filter(fl == 'p') %>% dplyr::select(cty)
+
+#정규성 검사
+shapiro.test(mpgR$cty)
+shapiro.test(mpgP$cty)
+# 두 검사 모두 p-value <= 0.05 이므로 모두 정규성을 만족하지 않는다.
+# 하지만 정규성을 가진다고 가정하고 테스트한다.
+
+# 등분산성 테스트
+var.test(y = mpgP$cty, x = mpgR$cty)
+# p-value(0.04) <=0.05 이므로 등분산성을 만족하지 않는다.
+
+t.test(y = mpgP$cty, x = mpgR$cty, mu = 0, var.equal = F)
+# p-value(0.2) >= 0.05 이므로 귀무가설을 채택한다. 휘발유에 따른 연비 차이는 없다.
+```
+  
+##### 3) subcompact 자동차의 전륜구동(f)이냐 후륜구동(r)이냐에 따른 도시 연비
+```{r}
+mpgF <- mpg %>% dplyr::filter(class == 'subcompact' & drv == 'f') %>% dplyr::select(cty)
+mpgRr <- mpg %>% dplyr::filter(class == 'subcompact' & drv == 'r') %>% dplyr::select(cty)
+
+#정규성 검사
+shapiro.test(mpgF$cty)
+shapiro.test(mpgRr$cty)
+# 두 검사 모두 p-value >= 0.05 이므로 모두 정규성을 만족한다.
+
+# 등분산성 테스트
+var.test(y = mpgRr$cty, x = mpgF$cty)
+# p-value(0.04) <=0.05 이므로 등분산성을 만족하지 않는다.
+
+t.test(y = mpgRr$cty, mpgF$cty, mu = 0, var.equal = F)
+# p-value(***) <= 0.05 이므로 대립가설을 채택한다. 전륜과 후륜에 따른 도시 연비 차이는 난다.
+```
+  
+## 4번 문제
+##### 새로운 당뇨병 치료제를 개발한 제약사에서는 치료에 지대한 영향을 주는 외부요인을 통제하기 위해 
+##### 10명의 당뇨병 환자를 선별하여 1달 동안 ’위약(placebo)’을 투여한 기간의의 혈당 수치(Xi)와 
+##### ’신약(new medicine)’을 투여한 1달 기간 동안의 혈당 수치(Yi)를 측정하여 짝을 이루어 혈당 차이를 유의수준 5%에서 비교하시오.
+```{r}
+#4
+sample1 <- c(51.4, 52.0, 45.5, 54.5, 52.3, 50.9, 52.7, 50.3, 53.8, 53.1)
+sample2 <- c(50.1, 51.5, 45.9, 53.1, 51.8, 50.3, 52.0, 49.9, 52.5, 53.0)
+
+#정규성 검사
+shapiro.test(sample1)
+shapiro.test(sample2)
+# 두 검사 모두 p-value >= 0.05 이므로 모두 정규성을 만족한다.
+
+t.test(sample1, sample2, paired = T)
+# p-value(0.006) <= 0.05 이므로 대립가설을 채택한다. 당뇨병 치료제는 효과가 있다.
+```
+  
+## 5번 문제
+##### 두 종류의 신발 밑창의 원재료가 닳는 정도가 차이가 있는지를 검정하기 위해서 
+##### 10명의 소년에게 한쪽은 A라는 원재료로 만든 신발을 신기고, 
+##### 다른 한쪽은 B라는 원재료로 만든 신발을 신긴 후에, 
+##### 일정 기간이 지난후에 신발을 수거하여 10명의 각 소년의 왼쪽 신발 밑창의 닳은 정도와 
+##### 오른쪽 신발 밑창의 닳은 정도의 차이를 비교하여
+##### 두 종류 원재료의 재질이 다른지를 검정하시오.
+```{r}
+#5
+sample3 <- c(13.2, 8.2, 10.9, 14.3, 10.7, 6.6, 9.5, 10.8, 8.8, 13.3)
+sample4 <- c(14.0, 8.8, 11.2, 14.2, 11.8, 6.4, 9.8, 11.3, 9.3, 13.6)
+
+#정규성 검사
+shapiro.test(sample3)
+shapiro.test(sample4)
+# 두 검사 모두 p-value >= 0.05 이므로 모두 정규성을 만족한다.
+
+t.test(sample3, sample4, paired = T)
+# p-value(0.008) <= 0.05 이므로 대립가설을 채택한다. 재질의 차이가 있다.
+```
+  
+  
