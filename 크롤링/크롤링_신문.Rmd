@@ -1,0 +1,164 @@
+---
+title: "각 신문사의 경제 파트 데이터 마이닝"
+author: "김상규"
+date: '2019 7 2 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 19-07-02 ~ 19-06-26 1주일간의 각 신문사의 기사 분석
+# ( 동아, 조선, 경향, 한국경제, 국민, JTBC )
+  
+## 필요 라이브러리 설치
+```{r}
+library(dplyr)
+library(stringr)
+library(rvest)
+
+library(rJava)
+library(tm)
+library(KoNLP)
+library(wordcloud2)
+library(stringr)
+
+useSejongDic()
+
+trim <- function(x) gsub('^\\s+|\\s+$',"",x)
+```
+## 국민일보 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# 국민일보 1주일간의 타이틀 데이터 마이닝
+title_kmib<-c()
+
+url_1_kmib_1 <- 'http://news.kmib.co.kr/article/list.asp?sid1=eco&sid2=&page='
+page <- c(3,6,2,1,3,5,6)
+url_1_kmib_2 <- '&sdate='
+date <- c(20190702:20190701,20190630:20190626)
+url_1_kmib_3 <- '&st='
+for(x in date){
+  for(y in page){
+    url <- paste0(url_1_kmib_1, y, url_1_kmib_2, x, url_1_kmib_3)
+    html <- read_html(url, encoding = 'euc-kr')
+    title_temp <- html %>% 
+      html_nodes('.nws_list') %>%
+      html_nodes('.nws') %>% 
+      html_nodes('dt')%>%
+      html_nodes('a')%>%
+      html_text()
+    title_kmib <- c(title_kmib, title_temp)
+  }
+}
+```
+  
+## 동아일보 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# 동아일보 1주일간의 타이틀 데이터 마이닝
+title_donga<-c()
+url_2_donga_1 <- 'http://voice.donga.com/List?c=01&p='
+page <- seq(1, 691,by = 15)
+for(x in page){
+  url <- paste0(url_2_donga_1, x)
+  html <- read_html(url)
+  title_temp <- html %>% 
+    html_nodes('.articleList') %>%
+    html_nodes('.title') %>%
+    html_text()
+  title_donga <- c(title_donga, title_temp)
+}
+
+```
+  
+## 경향신문 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# 경향신문 1주일간의 타이틀 데이터 마이닝
+title_khan<-c()
+url_3_khan_1 <- 'http://biz.khan.co.kr/khan_art_list.html?category=economy&page='
+page <-c(1:6)
+for(x in page){
+  url <- paste0(url_3_khan_1, x)
+  html <- read_html(url, encoding = 'euc-kr')
+  title_temp <- html %>% 
+    html_nodes('.text_area') %>%
+    html_nodes('.hd_title') %>% 
+    html_nodes('a') %>% 
+    html_text()
+  title_khan <- c(title_khan, title_temp)
+}
+```
+  
+## 조선일보 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# 조선일보 1주일간의 타이틀 데이터 마이닝
+title_chosun<-c()
+url_4_chosun_1 <- 'http://biz.chosun.com/svc/list_in/list.html?source=1&pn='
+page <-c(1:18)
+for(x in page){
+  url <- paste0(url_4_chosun_1, x)
+  html <- read_html(url)
+  title_temp <- html %>% 
+    html_nodes('.list_item') %>%
+    html_nodes('dt') %>% 
+    html_nodes('a') %>% 
+    html_text()
+  title_chosun <- c(title_chosun, title_temp)
+}
+```
+  
+## JTBC 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# JTBC 1주일간의 타이틀 데이터 마이닝
+title_jtbc <- c()
+url_5_jtbc_1 <- 'http://news.jtbc.joins.com/section/list.aspx?pdate='
+date <- date <- c(20190702:20190701,20190630:20190626)
+url_5_jtbc_2 <- '&scode=20&copyright='
+for(x in date){
+  url <- paste0(url_5_jtbc_1, x, url_5_jtbc_2)
+  html <- read_html(url)
+  title_temp <- trim(html %>% 
+                       html_nodes('.title_cr') %>% 
+                       html_text())
+  title_jtbc <- c(title_jtbc, title_temp)
+}
+
+```
+  
+## 한국경제 경제파트 기사타이틀 크롤링 (19-07-02 ~ 19-06-26 )
+```{r}
+# 한국졍제 1주일간의 타이틀 데이터 마이닝
+title_hankyung <- c()
+url_6_hankyung_1 <- 'https://www.hankyung.com/all-news/economy?page='
+page <- c(1:65)
+for(x in page){
+  url <- paste0(url_6_hankyung_1, x)
+  html <- read_html(url)
+  title_temp <- html %>%
+    html_nodes('.tit') %>%
+    html_text()
+  title_hankyung <- c(title_hankyung, title_temp)
+}
+```
+  
+## Wordcloud2를 활용
+```{r}
+# 데이터 통합
+title <- c(title_chosun, title_donga, title_hankyung, title_jtbc, title_khan, title_kmib)
+
+# 데이터 필터링
+title_Noun <- sapply(title, extractNoun, USE.NAMES = F)
+title_unlist <- unlist(title_Noun)
+title_replace<- str_replace_all(title_unlist, "[^[:alpha:]]","")
+title_filter1<- Filter(function(x) {nchar(x) <= 10}, title_replace)
+title_filter2<- Filter(function(x) {nchar(x) >= 2}, title_filter1)
+
+# 데이터 출력
+wordcloudTitleTxt <-as.data.frame(sort(table(title_filter2), decreasing = T))
+wordcloudTitleTxt <- wordcloudTitleTxt %>% filter(title_filter2 != '년월일')
+wordcloud2(wordcloudTitleTxt, color = "random-light", backgroundColor = "grey", rotateRatio = 1)
+
+# 상위 10개 데이터 빈도수 출력
+head(wordcloudTitleTxt, 10)
+```
+
